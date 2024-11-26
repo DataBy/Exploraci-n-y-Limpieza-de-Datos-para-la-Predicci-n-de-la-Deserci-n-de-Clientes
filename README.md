@@ -36,5 +36,5 @@ Si tienes sugerencias o mejoras, siéntete libre de abrir un issue o enviar un p
 
 📝 **Contacto**  
 - **Byron**  
-- [GitHub Profile](https://github.com/tuusuario)  
+- [GitHub Profile](https://github.com/DataBy)  
 - **Correo:** bolanoscontacto@gmail.com 
