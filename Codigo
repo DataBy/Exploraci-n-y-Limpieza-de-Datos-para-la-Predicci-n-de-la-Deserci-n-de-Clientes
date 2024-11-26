@@ -1,0 +1,236 @@
+# Importamos librerías
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from IPython.display import display
+from sklearn.preprocessing import StandardScaler
+
+# Lectura
+from google.colab import drive
+drive.mount('/content/drive')
+
+ruta = "coloca_tu_ruta_al_dataset_del_drive"
+data = pd.read_csv(ruta)
+
+# Visualizamos los primeros datos del dataset
+print(data.shape)
+data.head()
+
+# Visualizamos las variables categóricas y numéricas
+data.info()
+
+# Limpiamos valores nulos
+data = data.dropna()
+
+# Eliminar columnas irrelevantes
+data = data.drop(['RowNumber', 'CustomerId', 'Surname'], axis=1)
+
+# Verificar que las columnas se han eliminado
+data.head()
+
+# Vemos la estadística descriptiva
+data.describe()
+
+# Limpiamos valores repetidos
+print("Número de filas antes de eliminar duplicados:", data.shape[0])
+data = data.drop_duplicates()
+print("Número de filas después de eliminar duplicados:", data.shape[0])
+
+# Codificación de las variables categóricas directamente sobre el dataset original
+data = pd.get_dummies(data, columns=['Geography', 'Gender'], drop_first=True)
+
+# Verificamos el tipo de datos después de la codificación
+print(data.info())
+
+# Después de codificar (ya no deberían haber categorías, solo columnas binarias)
+print(data.columns)
+
+# Seleccionamos las columnas numéricas para escalar
+columnas_a_escalar = ['CreditScore', 'Age', 'Balance', 'Tenure', 'EstimatedSalary']
+datos_a_escalar = data[columnas_a_escalar]
+
+# Escalamos usando Z-Score (StandardScaler)
+scaler = StandardScaler()
+datos_escalados = scaler.fit_transform(datos_a_escalar)
+
+# Sustituimos los datos originales por los escalados
+data[columnas_a_escalar] = datos_escalados
+
+# Verificamos los resultados
+print("Datos después del escalado:")
+print(display((data.head())))
+
+# Generamos gráficas tipo boxplot para identificar outliers
+
+# Lista de columnas numéricas para analizar
+numeric_columns = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary', 'Exited']
+
+# Configurar el tamaño de las gráficas
+plt.figure(figsize=(15, 10))
+
+# Crear boxplots para cada columna numérica
+for i, column in enumerate(numeric_columns, 1):
+    plt.subplot(3, 3, i)  # 3 filas, 3 columnas
+    sns.boxplot(y=data_encoded[column])
+    plt.title(f'Boxplot de {column}')
+    plt.xlabel(column)
+
+plt.tight_layout()
+plt.show()
+
+# Calcular el primer cuartil (Q1) y el tercer cuartil (Q3) para CreditScore
+original_size = data.shape[0]
+Q1 = data['CreditScore'].quantile(0.25)
+Q3 = data['CreditScore'].quantile(0.75)
+IQR = Q3 - Q1
+
+# Calcular los límites inferior y superior
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Filtrar el DataFrame para eliminar outliers de CreditScore
+data = data[(data['CreditScore'] >= lower_bound) & (data['CreditScore'] <= upper_bound)]
+
+# Verificar el tamaño del nuevo DataFrame
+print(f"Tamaño original: {original_size}")  # Tamaño original antes de la eliminación
+print(f"Tamaño sin outliers: {data.shape[0]}")
+
+# Verificamos luego de borrar outliers
+plt.figure(figsize=(10, 6))
+sns.boxplot(x=data['CreditScore'])
+plt.title('Boxplot de CreditScore sin Outliers')
+plt.show()
+
+# Guardamos el tamaño original antes de eliminar outliers
+original_size = data.shape[0]
+
+# Calcular el primer cuartil (Q1) y el tercer cuartil (Q3) para Age
+Q1 = data['Age'].quantile(0.25)
+Q3 = data['Age'].quantile(0.75)
+IQR = Q3 - Q1
+
+# Calcular los límites inferior y superior usando el factor original de 1.2
+lower_bound = Q1 - 1.2 * IQR
+upper_bound = Q3 + 1.2 * IQR
+
+# Filtrar el DataFrame para eliminar outliers de Age
+data = data[(data['Age'] >= lower_bound) & (data['Age'] <= upper_bound)]
+
+# Verificar el tamaño del nuevo DataFrame
+print(f"Tamaño original: {original_size}")  # Tamaño original antes de la eliminación
+print(f"Tamaño sin outliers: {data.shape[0]}")  # Tamaño después de eliminar outliers
+
+# Verificamos luego de borrar outliers
+plt.figure(figsize=(10, 6))
+sns.boxplot(x=data['Age'])
+plt.title('Boxplot de Edad sin Outliers')
+plt.show()
+
+# Guardamos el tamaño original antes de eliminar outliers
+original_size = data.shape[0]
+
+# Calcular el primer cuartil (Q1) y el tercer cuartil (Q3) para NumOfProducts
+Q1 = data['NumOfProducts'].quantile(0.25)
+Q3 = data['NumOfProducts'].quantile(0.75)
+IQR = Q3 - Q1
+
+# Calcular los límites inferior y superior usando un factor ajustable de 1.5
+factor = 1.5
+lower_bound = Q1 - factor * IQR
+upper_bound = Q3 + factor * IQR
+
+# Filtrar el DataFrame para eliminar outliers de NumOfProducts
+data = data[(data['NumOfProducts'] >= lower_bound) & (data['NumOfProducts'] <= upper_bound)]
+
+# Verificar el tamaño del nuevo DataFrame
+print(f"Tamaño original: {original_size}")  # Tamaño original antes de la eliminación
+print(f"Tamaño sin outliers para NumOfProducts: {data.shape[0]}")  # Tamaño después de eliminar outliers
+
+# Verificamos luego de borrar outliers
+plt.figure(figsize=(10, 6))
+sns.boxplot(x=data['NumOfProducts'])
+plt.title('Boxplot de NumOfProducts sin Outliers')
+plt.show()
+
+# Vamos a verificar a detalle los datos para asegurar de una calidad excelente
+
+# Verificar tipos de datos
+print("Tipos de Datos:\n")
+for column, dtype in data.dtypes.items():
+    print(f"{column}: {dtype}")
+print("\n")  # Salto de línea
+
+# Identificar valores faltantes
+missing_values = data.isnull().sum()
+if missing_values.sum() == 0:
+    print("Valores Faltantes: No hay valores faltantes.\n")
+else:
+    print("Valores Faltantes:\n")
+    display(missing_values[missing_values > 0])
+
+# Buscar duplicados
+duplicates = data.duplicated().sum()
+if duplicates == 0:
+    print("Valores Duplicados: No hay duplicados.\n")
+else:
+    print(f"Valores Duplicados: {duplicates} duplicados encontrados.\n")
+
+# Verificar rango de valores para Age
+age_outliers = data[(data['Age'] < 0) | (data['Age'] > 100)]
+if age_outliers.empty:
+    print("Valores de Edad Fuera de Rango: No hay valores fuera de rango.\n")
+else:
+    print("Valores de Edad Fuera de Rango:\n")
+    display(age_outliers)
+
+# Estadísticas descriptivas
+statistics = data.describe()
+print("Estadísticas Descriptivas:\n")
+display(statistics)
+
+# Visualización final
+
+# Definir el tamaño de las gráficas
+plt.figure(figsize=(15, 12))
+
+# Graficar histogramas
+num_cols = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary']
+for i, col in enumerate(num_cols):
+    plt.subplot(3, 2, i + 1)
+    sns.histplot(data[col], bins=20, kde=True)
+    plt.title(f'Distribución de {col}')
+    plt.xlabel(col)
+    plt.ylabel('Frecuencia')
+
+plt.tight_layout()
+plt.show()
+
+
+# Graficar variables categóricas
+plt.figure(figsize=(12, 6))
+
+
+# Graficar boxplots
+plt.figure(figsize=(15, 12))
+
+for i, col in enumerate(num_cols):
+    plt.subplot(3, 2, i + 1)
+    sns.boxplot(x=data[col])
+    plt.title(f'Boxplot de {col}')
+    plt.xlabel(col)
+
+plt.tight_layout()
+plt.show()
+
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Age', y='Balance', hue='Exited', data=data)
+plt.title('Relación entre Edad y Balance')
+plt.xlabel('Edad')
+plt.ylabel('Balance')
+plt.show()
+
+# Exportamos el nuevo dataset limpio
+
+ruta = "tu_ruta_para_exportar"
+data.to_csv(ruta, index=False)
